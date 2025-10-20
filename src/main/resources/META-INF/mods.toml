@@ -12,6 +12,7 @@ authors="${authors}"
 description='''${modDescription}'''
 logoFile="assets/${modId}/icon.png"
 displayURL="${homepage}"
+MixinConfigs="starcaller.mixins.json"
 
 [[dependencies.${modId}]]
     modId="forge"

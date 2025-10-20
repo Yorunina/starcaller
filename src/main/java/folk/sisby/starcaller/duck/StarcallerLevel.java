@@ -1,12 +1,19 @@
 package folk.sisby.starcaller.duck;
 
 import folk.sisby.starcaller.Star;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface StarcallerLevel {
-    long starcaller$getSeed();
+	static Optional<StarcallerLevel> of(Level level) {
+		return level instanceof StarcallerLevel ? Optional.of((StarcallerLevel) level) : Optional.empty();
+	}
+
+	long starcaller$getSeed();
     int starcaller$getIterations();
     List<Star> starcaller$getStars();
 

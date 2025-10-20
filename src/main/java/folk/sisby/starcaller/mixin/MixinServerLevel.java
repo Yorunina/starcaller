@@ -6,11 +6,19 @@ import folk.sisby.starcaller.StarcallerConfig;
 import folk.sisby.starcaller.Starcaller;
 import folk.sisby.starcaller.duck.StarcallerLevel;
 import folk.sisby.starcaller.util.StarUtil;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.storage.WritableLevelData;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 @Mixin(ServerLevel.class)
 public abstract class MixinServerLevel implements StarcallerLevel {

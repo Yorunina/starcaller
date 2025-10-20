@@ -13,11 +13,9 @@ import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -30,9 +28,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
@@ -184,8 +180,7 @@ public class Starcaller {
 	public static void syncStarGrounded(Player cause, ServerLevel level, Star star) {
 		int starIndex = ((StarcallerLevel) level).starcaller$getStars().indexOf(star);
 		S2CStarcallerPacket packet = new S2CStarcallerPacket(Map.of(starIndex, star.groundedTick));
-		// 优化：只发送给维度内除自己以外的其他玩家
-		level.getPlayers((pPlayer) -> pPlayer != cause).forEach(player -> {
+		level.getPlayers((pPlayer) -> true).forEach(player -> {
 			PacketHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
 		});
 	}
@@ -193,7 +188,7 @@ public class Starcaller {
 	public static void syncStarColor(Player cause, ServerLevel level, Star star) {
 		int starIndex = ((StarcallerLevel) level).starcaller$getStars().indexOf(star);
 		S2CStarcallerPacket packet = new S2CStarcallerPacket(Map.of(starIndex, star.color), true);
-		level.getPlayers((pPlayer) -> pPlayer != cause).forEach(player -> {
+		level.getPlayers((pPlayer) -> true).forEach(player -> {
 			PacketHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
 		});
 	}

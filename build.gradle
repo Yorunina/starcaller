@@ -30,6 +30,11 @@ dependencies {
 		jarJar.ranged(it, "[0.2.0,)")
 	}
 }
+mixin {
+	add sourceSets.main, "${modId}.refmap.json"
+	config "${modId}.mixins.json"
+	debug.export = true
+}
 
 processResources {
     final Map<String, String> meta = [
@@ -75,6 +80,10 @@ minecraft {
 
     runs {
         client {
+			properties 'mixin.env.remapRefMap': 'true'
+			property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg"
+			workingDirectory project.file('run_client')
+			arg "-mixin.config=${modId}.mixins.json"
             workingDirectory project.file("run")
             property "forge.logging.console.level", "debug"
             mods {
@@ -85,6 +94,10 @@ minecraft {
         }
 
         server {
+			properties 'mixin.env.remapRefMap': 'true'
+			property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg"
+			workingDirectory project.file('run_server')
+			arg "-mixin.config=${modId}.mixins.json"
             workingDirectory project.file("run")
             property "forge.logging.console.level", "debug"
             mods {

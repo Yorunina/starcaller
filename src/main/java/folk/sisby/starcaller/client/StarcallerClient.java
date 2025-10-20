@@ -14,8 +14,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -23,7 +21,6 @@ import java.util.Objects;
 import java.util.Map;
 
 public class StarcallerClient {
-	public static final Logger LOGGER = LoggerFactory.getLogger("starcaller_client");
 
 	public static float isStardustExpired(ItemStack stack, @Nullable Level level) {
 		return Objects.requireNonNullElse(StardustItem.getRemainingTicks(stack, level), 1L) <= 0 ? 1.0F : 0.0F;

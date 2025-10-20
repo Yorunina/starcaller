@@ -45,9 +45,17 @@ public class SpearItem extends Item {
 	@Override
 	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
 		super.inventoryTick(stack, level, entity, slotId, isSelected);
-		if (level.isClientSide && entity instanceof Player player && (player.getMainHandItem() == stack || player.getOffhandItem() == stack)) {
-			StarcallerLevel scw = (StarcallerLevel) entity.level();
+		if (!level.isClientSide) {
+			return;
+		}
+		if (entity instanceof Player player && isSelected) {
+			Optional<StarcallerLevel> optLevel = StarcallerLevel.of(level);
+			Starcaller.LOGGER.info("SpearItem Tick");
+			if (optLevel.isEmpty()) return;
+			StarcallerLevel scw = optLevel.get();
+			Starcaller.LOGGER.info("SpearItem Tick 1");
 			if (player.pick(12 * 16, 1.0F, false).getType() == HitResult.Type.MISS) {
+				Starcaller.LOGGER.info("SpearItem Tick 2");
 				List<Star> stars = scw.starcaller$getStars();
 				Vec3 cursorCoordinates = StarUtil.correctForSkyAngle(StarUtil.getStarCursor(player.getYHeadRot(), player.getXRot()), level.getSunAngle(1.0F));
 				Optional<Star> closestStarOpt = stars.stream().filter(s -> s.groundedTick == -1 || s.groundedTick + StarcallerConfig.starGroundedTicks < level.getDayTime()).min(Comparator.comparingDouble(s -> s.pos.distanceToSqr(cursorCoordinates)));
@@ -55,9 +63,7 @@ public class SpearItem extends Item {
 					Star closestStar = closestStarOpt.get();
 					int i = stars.indexOf(closestStar);
 					player.displayClientMessage(Component.translatable("messages.starcaller.star.info", Component.translatable("star.starcaller.overworld.%s".formatted(i)).setStyle(Style.EMPTY.applyFormat(ChatFormatting.ITALIC).withColor(closestStar.color))), true);
-					return;
 				}
-				if (!player.getMainHandItem().is(Starcaller.STARDUST.get())) player.displayClientMessage(Component.empty(), true);
 			}
 		}
 	}

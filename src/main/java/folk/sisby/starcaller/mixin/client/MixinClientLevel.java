@@ -6,7 +6,16 @@ import folk.sisby.starcaller.client.StarcallerClient;
 import folk.sisby.starcaller.duck.StarcallerLevel;
 import folk.sisby.starcaller.util.StarUtil;import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.storage.WritableLevelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 @Mixin(ClientLevel.class)
 public abstract class MixinClientLevel implements StarcallerLevel {
@@ -21,9 +31,11 @@ public abstract class MixinClientLevel implements StarcallerLevel {
 	@Unique private int starcaller$iterations = 1500;
 	@Unique private List<Star> starcaller$stars = StarUtil.generateStars(starcaller$seed, starcaller$iterations);
 
-	@Inject(method = "getSkyDarken", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "getStarBrightness", at = @At("HEAD"), cancellable = true)
 	public void fullBrightStarsWithSpear(float f, CallbackInfoReturnable<Float> cir) {
-		if (Minecraft.getInstance().player != null && (Minecraft.getInstance().player.getMainHandItem().is(Starcaller.SPEAR.get()) || Minecraft.getInstance().player.getOffhandItem().is(Starcaller.SPEAR.get()))) {
+		Player player = Minecraft.getInstance().player;
+		if (player.getMainHandItem().is(Starcaller.SPEAR.get()) || player.getOffhandItem().is(Starcaller.SPEAR.get())) {
+			Starcaller.LOGGER.info("getStarBrightness");
 			cir.setReturnValue(1.0F);
 			cir.cancel();
 		}

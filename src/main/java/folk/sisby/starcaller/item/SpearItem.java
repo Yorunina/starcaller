@@ -2,92 +2,96 @@ package folk.sisby.starcaller.item;
 
 import folk.sisby.starcaller.Star;
 import folk.sisby.starcaller.Starcaller;
-import folk.sisby.starcaller.duck.StarcallerWorld;
+import folk.sisby.starcaller.StarcallerConfig;
+import folk.sisby.starcaller.duck.StarcallerLevel;
 import folk.sisby.starcaller.util.StarUtil;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.stat.Stats;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.util.UseAction;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 public class SpearItem extends Item {
-    public static final int DRAW_TIME = 10;
-    public static final int COOLDOWN_TICKS = 10;
+	public static final int DRAW_TIME = 10;
+	public static final int COOLDOWN_TICKS = 10;
 
-    public SpearItem(Settings settings) {
-        super(settings);
-    }
+	public SpearItem(Item.Properties settings) {
+		super(settings);
+	}
 
-    @Override
-    public TypedActionResult<ItemStack> use(World world, PlayerEntity playerEntity, Hand hand) {
-        ItemStack itemStack = playerEntity.getStackInHand(hand);
-        playerEntity.setCurrentHand(hand);
-        return TypedActionResult.consume(itemStack);
-    }
+	@Override
+	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+		ItemStack itemStack = player.getItemInHand(hand);
+		player.startUsingItem(hand);
+		return InteractionResultHolder.consume(itemStack);
+	}
 
-    @Override
-    public void inventoryTick(ItemStack itemStack, World world, Entity entity, int delta, boolean bl) {
-        super.inventoryTick(itemStack, world, entity, delta, bl);
-        if (world.isClient && entity instanceof PlayerEntity player && world instanceof StarcallerWorld scw && (player.getMainHandStack() == itemStack || player.getOffHandStack() == itemStack)) {
-            if (player.raycast(12 * 16, 1.0F, false).getType() == HitResult.Type.MISS) {
-                List<Star> stars = scw.starcaller$getStars();
-                Vec3d cursorCoordinates = StarUtil.correctForSkyAngle(StarUtil.getStarCursor(player.getHeadYaw(), player.getPitch()), world.getSkyAngle(1.0F));
-                Star closestStar = stars.stream().filter(s -> s.groundedTick == -1 || s.groundedTick + Starcaller.CONFIG.starGroundedTicks < world.getTime()).filter(s -> s.groundedTick == -1 || s.groundedTick + Starcaller.CONFIG.starGroundedTicks < world.getTime()).min(Comparator.comparingDouble(s -> s.pos.squaredDistanceTo(cursorCoordinates))).get();
-                if (cursorCoordinates.isInRange(closestStar.pos, 4)) {
-                    int i = stars.indexOf(closestStar);
-                    player.sendMessage(Text.translatable("messages.starcaller.star.info", Text.translatable("star.starcaller.overworld.%s".formatted(i)).setStyle(Style.EMPTY.withFormatting(Formatting.ITALIC).withColor(closestStar.color))), true);
-                    return;
-                }
-                if (!player.getMainHandStack().isOf(Starcaller.STARDUST)) player.sendMessage(Text.empty(), true);
-            }
-        }
-    }
+	@Override
+	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
+		super.inventoryTick(stack, level, entity, slotId, isSelected);
+		if (level.isClientSide && entity instanceof Player player && level instanceof StarcallerLevel scw && (player.getMainHandItem() == stack || player.getOffhandItem() == stack)) {
+			if (player.pick(12 * 16, 1.0F, false).getType() == HitResult.Type.MISS) {
+				List<Star> stars = scw.starcaller$getStars();
+				Vec3 cursorCoordinates = StarUtil.correctForSkyAngle(StarUtil.getStarCursor(player.getYHeadRot(), player.getXRot()), level.getSunAngle(1.0F));
+				Optional<Star> closestStarOpt = stars.stream().filter(s -> s.groundedTick == -1 || s.groundedTick + StarcallerConfig.starGroundedTicks < level.getDayTime()).min(Comparator.comparingDouble(s -> s.pos.distanceToSqr(cursorCoordinates)));
+				if (closestStarOpt.isPresent() && cursorCoordinates.distanceToSqr(closestStarOpt.get().pos) < 4 * 4) {
+					Star closestStar = closestStarOpt.get();
+					int i = stars.indexOf(closestStar);
+					player.displayClientMessage(Component.translatable("messages.starcaller.star.info", Component.translatable("star.starcaller.overworld.%s".formatted(i)).setStyle(Style.EMPTY.applyFormat(ChatFormatting.ITALIC).withColor(closestStar.color))), true);
+					return;
+				}
+				if (!player.getMainHandItem().is(Starcaller.STARDUST.get())) player.displayClientMessage(Component.empty(), true);
+			}
+		}
+	}
 
-    @Override
-    public void onStoppedUsing(ItemStack itemStack, World world, LivingEntity livingEntity, int i) {
-        if (livingEntity instanceof PlayerEntity player) {
-            int j = this.getMaxUseTime(itemStack) - i;
-            if (j >= DRAW_TIME) {
-                world.playSoundFromEntity(player, player, SoundEvents.ITEM_TRIDENT_THROW, SoundCategory.PLAYERS, 1.0F, 1.0F);
-                if (world instanceof StarcallerWorld scw) {
-                    if (player.raycast(12 * 16, 1.0F, false).getType() == HitResult.Type.MISS) {
-                        Vec3d cursorCoordinates = StarUtil.correctForSkyAngle(StarUtil.getStarCursor(player.getHeadYaw(), player.getPitch()), world.getSkyAngle(1.0F));
-                        Star closestStar = ((StarcallerWorld) world).starcaller$getStars().stream().min(Comparator.comparingDouble(s -> s.pos.squaredDistanceTo(cursorCoordinates))).get();
-                        if (cursorCoordinates.isInRange(closestStar.pos, 4)) {
-                            int starIndex = ((StarcallerWorld) world).starcaller$getStars().indexOf(closestStar);
-                            scw.starcaller$groundStar(player, closestStar);
-                            player.getInventory().offerOrDrop(StardustItem.fromStar(starIndex, closestStar));
-                        }
-                    }
-                }
-                player.incrementStat(Stats.USED.getOrCreateStat(this));
-                player.getItemCooldownManager().set(this, COOLDOWN_TICKS);
-            }
-        }
-    }
+	@Override
+	public void releaseUsing(ItemStack stack, Level level, LivingEntity livingEntity, int timeCharged) {
+		if (livingEntity instanceof Player player) {
+			int j = this.getUseDuration(stack) - timeCharged;
+			if (j >= DRAW_TIME) {
+				level.playSound(null, player, SoundEvents.TRIDENT_THROW, SoundSource.PLAYERS, 1.0F, 1.0F);
+				if (level instanceof StarcallerLevel scw) {
+					if (player.pick(12 * 16, 1.0F, false).getType() == HitResult.Type.MISS) {
+						Vec3 cursorCoordinates = StarUtil.correctForSkyAngle(StarUtil.getStarCursor(player.getYHeadRot(), player.getXRot()), level.getSunAngle(1.0F));
+						Optional<Star> closestStarOpt = scw.starcaller$getStars().stream().min(Comparator.comparingDouble(s -> s.pos.distanceToSqr(cursorCoordinates)));
+						if (closestStarOpt.isPresent() && cursorCoordinates.distanceToSqr(closestStarOpt.get().pos) < 4 * 4) {
+							Star closestStar = closestStarOpt.get();
+							int starIndex = scw.starcaller$getStars().indexOf(closestStar);
+							scw.starcaller$groundStar(player, closestStar);
+							player.getInventory().add(StardustItem.fromStar(starIndex, closestStar));
+						}
+					}
+				}
+				player.awardStat(Stats.ITEM_USED.get(this));
+				player.getCooldowns().addCooldown(this, COOLDOWN_TICKS);
+			}
+		}
+	}
 
-    @Override
-    public UseAction getUseAction(ItemStack itemStack) {
-        return UseAction.SPEAR;
-    }
+	@Override
+	public UseAnim getUseAnimation(ItemStack stack) {
+		return UseAnim.SPEAR;
+	}
 
-    @Override
-    public int getMaxUseTime(ItemStack itemStack) {
-        return 72000;
-    }
+	@Override
+	public int getUseDuration(ItemStack stack) {
+		return 72000;
+	}
 }

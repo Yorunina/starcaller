@@ -1,7 +1,8 @@
 package folk.sisby.starcaller;
 
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.math.Vec3d;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.phys.Vec3;
 
 public class Star {
     public static final int DEFAULT_COLOR = 0xFFFFFFFF;
@@ -12,13 +13,13 @@ public class Star {
     public static final String KEY_EDITOR = "editor";
     public static final String KEY_EDITOR_COLOR = "groundedTick";
 
-    public final Vec3d pos;
+    public final Vec3 pos;
     public long groundedTick;
     public int color; // With Alpha
     public String editor; // Unused on client
     public int editorColor; // Unused on client
 
-    public Star(Vec3d pos) {
+    public Star(Vec3 pos) {
         this.pos = pos;
         readData(null, null, null, null);
     }
@@ -30,7 +31,7 @@ public class Star {
         this.editorColor = editorColor != null ? editorColor : DEFAULT_EDITOR_COLOR;
     }
 
-    public void readNbt(NbtCompound nbt) {
+    public void readNbt(CompoundTag nbt) {
         readData(
                 nbt.contains(KEY_GROUNDED_TICK) ? nbt.getLong(KEY_GROUNDED_TICK) : null,
                 nbt.contains(KEY_COLOR) ? nbt.getInt(KEY_COLOR) : null,
@@ -39,8 +40,8 @@ public class Star {
         );
     }
 
-    public NbtCompound toNbt() {
-        NbtCompound starCompound = new NbtCompound();
+    public CompoundTag toNbt() {
+		CompoundTag starCompound = new CompoundTag();
         if (groundedTick != DEFAULT_GROUNDED_TICK) starCompound.putLong(KEY_GROUNDED_TICK, groundedTick);
         if (color != DEFAULT_COLOR) starCompound.putInt(KEY_COLOR, color);
         if (editor != null) starCompound.putString(KEY_EDITOR, editor);

@@ -1,18 +1,17 @@
 package folk.sisby.starcaller.mixin.client;
 
+
 import com.llamalad7.mixinextras.injector.ModifyReceiver;
 import folk.sisby.starcaller.Star;
 import folk.sisby.starcaller.Starcaller;
-import folk.sisby.starcaller.duck.StarcallerWorld;
-import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.random.Random;
+import folk.sisby.starcaller.StarcallerConfig;
+import folk.sisby.starcaller.duck.StarcallerLevel;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -28,9 +27,9 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import java.util.List;
 import java.util.function.Supplier;
 
-@Mixin(WorldRenderer.class)
-public abstract class MixinWorldRenderer {
-    @Shadow private @Nullable ClientWorld world;
+@Mixin(LevelRenderer.class)
+public abstract class MixinLevelRenderer {
+    @Shadow private @Nullable ClientLevel level;
     @Unique private int starIndex = -1;
 
     @Inject(method = "renderStars(Lnet/minecraft/client/render/BufferBuilder;)Lnet/minecraft/client/render/BufferBuilder$BuiltBuffer;", at = @At("HEAD"))
@@ -45,7 +44,7 @@ public abstract class MixinWorldRenderer {
 
     @ModifyArg(method = "renderStars(Lnet/minecraft/client/render/BufferBuilder;)Lnet/minecraft/client/render/BufferBuilder$BuiltBuffer;", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/random/Random;create(J)Lnet/minecraft/util/math/random/Random;"))
     public long useCustomSeed(long original) {
-        if (world instanceof StarcallerWorld scw) {
+        if (world instanceof StarcallerLevel scw) {
             return scw.starcaller$getSeed();
         }
         return original;
@@ -53,7 +52,7 @@ public abstract class MixinWorldRenderer {
 
     @ModifyConstant(method = "renderStars(Lnet/minecraft/client/render/BufferBuilder;)Lnet/minecraft/client/render/BufferBuilder$BuiltBuffer;", constant = @Constant(intValue = 1500))
     public int useCustomLimit(int constant) {
-        if (world instanceof StarcallerWorld scw) {
+        if (world instanceof StarcallerLevel scw) {
             return scw.starcaller$getIterations();
         }
         return constant;
@@ -62,11 +61,11 @@ public abstract class MixinWorldRenderer {
     @ModifyReceiver(method = "renderStars(Lnet/minecraft/client/render/BufferBuilder;)Lnet/minecraft/client/render/BufferBuilder$BuiltBuffer;", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/VertexConsumer;next()V"))
     public VertexConsumer setColorPerStar(VertexConsumer instance, BufferBuilder builder) {
         int color = Star.DEFAULT_COLOR;
-        if (world instanceof StarcallerWorld scw) {
+        if (world instanceof StarcallerLevel scw) {
             List<Star> stars = scw.starcaller$getStars();
             if (starIndex < stars.size()) {
                 Star star = stars.get(starIndex);
-                boolean grounded = star.groundedTick != 0 && world.getTime() - star.groundedTick < Starcaller.CONFIG.starGroundedTicks;
+                boolean grounded = star.groundedTick != 0 && world.getTime() - star.groundedTick < StarcallerConfig.starGroundedTicks;
                 if (grounded) {
                     color = 0x00FFFF00;
                 } else {

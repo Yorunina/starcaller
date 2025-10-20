@@ -8,13 +8,10 @@
   },
   "mixins": [
     "MixinArmorDyeRecipe",
-    "MixinCraftingScreenHandler",
-    "MixinServerWorld"
+    "MixinServerLevel"
   ],
   "client": [
-    "client.MixinClientWorld",
-    "client.MixinInGameHud",
-    "client.MixinItemStack",
-    "client.MixinWorldRenderer"
+	  "client.MixinClientLevel",
+	  "client.MixinLevelRenderer"
   ]
 }

@@ -1,14 +1,14 @@
 package folk.sisby.starcaller;
 
 import folk.sisby.starcaller.util.StarUtil;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.world.PersistentState;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.List;
 
-public class StarState extends PersistentState {
+public class StarState extends SavedData {
     public static final String KEY_SEED = "seed";
     public static final String KEY_LIMIT = "limit";
     public static final String KEY_STARS = "stars";
@@ -19,11 +19,11 @@ public class StarState extends PersistentState {
     public List<Star> stars;
 
     public StarState(long worldSeed) {
-        this.seed = (Starcaller.CONFIG.starSeed != -1 ? Starcaller.CONFIG.starSeed : worldSeed);
-        this.limit = Starcaller.CONFIG.starLimit;
+        this.seed = (StarcallerConfig.starSeed != -1 ? StarcallerConfig.starSeed : worldSeed);
+        this.limit = StarcallerConfig.starLimit;
         this.iterations = StarUtil.getGeneratorIterations(seed, limit);
         this.stars = StarUtil.generateStars(this.seed, this.iterations);
-        markDirty();
+        setDirty();
     }
 
     public StarState(long seed, int limit, int iterations, List<Star> stars) {
@@ -33,14 +33,14 @@ public class StarState extends PersistentState {
         this.stars = stars;
     }
 
-    public static StarState fromNbt(NbtCompound nbt, long worldSeed) {
-        long seed = nbt.contains(KEY_SEED) ? nbt.getLong(KEY_SEED) : (Starcaller.CONFIG.starSeed != -1 ? Starcaller.CONFIG.starSeed : worldSeed);
-        int limit = nbt.contains(KEY_LIMIT) ? nbt.getInt(KEY_LIMIT) : Starcaller.CONFIG.starLimit;
+    public static StarState load(CompoundTag nbt, long worldSeed) {
+        long seed = nbt.contains(KEY_SEED) ? nbt.getLong(KEY_SEED) : (StarcallerConfig.starSeed != -1 ? StarcallerConfig.starSeed : worldSeed);
+        int limit = nbt.contains(KEY_LIMIT) ? nbt.getInt(KEY_LIMIT) : StarcallerConfig.starLimit;
         int iterations = StarUtil.getGeneratorIterations(seed, limit);
         List<Star> stars = StarUtil.generateStars(seed, iterations);
         int i = 0;
-        for (NbtElement starElement : nbt.getList(KEY_STARS, NbtElement.COMPOUND_TYPE)) {
-            if (i < stars.size() && starElement instanceof NbtCompound starCompound) {
+        for (Tag starElement : nbt.getList(KEY_STARS, CompoundTag.TAG_COMPOUND)) {
+            if (i < stars.size() && starElement instanceof CompoundTag starCompound) {
                 stars.get(i).readNbt(starCompound);
             }
             i++;
@@ -49,8 +49,8 @@ public class StarState extends PersistentState {
     }
 
     @Override
-    public NbtCompound writeNbt(NbtCompound nbt) {
-        NbtList nbtList = new NbtList();
+    public CompoundTag save(CompoundTag nbt) {
+        ListTag nbtList = new ListTag();
         for (Star star : stars) {
             nbtList.add(star.toNbt());
         }

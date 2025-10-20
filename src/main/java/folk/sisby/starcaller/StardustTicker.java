@@ -1,6 +1,7 @@
 package folk.sisby.starcaller;
 
-import net.minecraft.item.ItemStack;
+
+import net.minecraft.world.item.ItemStack;
 
 public interface StardustTicker {
     default boolean isItemBarVisible(ItemStack stack) { return false; }

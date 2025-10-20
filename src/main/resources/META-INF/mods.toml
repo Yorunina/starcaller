@@ -1,44 +1,35 @@
-modLoader = "javafml"
-loaderVersion = "[4,)"
-license = "${license}"
-issueTrackerURL = "${issues}"
+modLoader="javafml"
+loaderVersion="[47,)"
+license="${license}"
+issueTrackerURL="${issues}"
+showAsResourcePack=false
 
 [[mods]]
-modId = "${modId}"
-version = "${version}"
-displayName = "${modName}"
-description = '''${modDescription}'''
-authors = "${members}"
-displayURL = "${homepage}"
-logoFile = "assets/${modId}/icon.png"
+modId="${modId}"
+version="${version}"
+displayName="${modName}"
+authors="${authors}"
+description='''${modDescription}'''
+logoFile="assets/${modId}/icon.png"
+displayURL="${homepage}"
 
-[properties]
-"connector:placeholder" = true
+[[dependencies.${modId}]]
+    modId="forge"
+    mandatory=true
+    versionRange="[${forge},)"
+    ordering="NONE"
+    side="BOTH"
 
-[[dependencies.${ modId }]]
-modId = "connectormod"
-mandatory = true
-versionRange = "*"
-ordering = "NONE"
-side = "BOTH"
+[[dependencies.${modId}]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[${mc}]"
+    ordering="NONE"
+    side="BOTH"
 
-[[dependencies.${ modId }]]
-modId = "forge"
-mandatory = true
-versionRange = "*"
-ordering = "NONE"
-side = "BOTH"
-
-[[dependencies.${ modId }]]
-modId = "minecraft"
-mandatory = true
-versionRange = "[${mc},)"
-ordering = "NONE"
-side = "BOTH"
-
-[[dependencies.${ modId }]]
-modId = "fabric_api"
-mandatory = true
-versionRange = "[${fapi},)"
-ordering = "NONE"
-side = "BOTH"
+[[dependencies.${modId}]]
+    modId="lib39-sandman"
+    mandatory=true
+    versionRange="[${lib39},)"
+    ordering="NONE"
+    side="BOTH"

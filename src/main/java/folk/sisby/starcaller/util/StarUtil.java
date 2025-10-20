@@ -1,15 +1,15 @@
 package folk.sisby.starcaller.util;
 
 import folk.sisby.starcaller.Star;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class StarUtil {
     public static List<Star> generateStars(long seed, int iterations) {
-        Random random = Random.create(seed);
+        RandomSource random = RandomSource.create(seed);
         List<Star> list = new ArrayList<>();
 
         for (int i = 0; i < iterations; ++i) {
@@ -24,14 +24,14 @@ public class StarUtil {
                 d *= ir2;
                 e *= ir2;
                 f *= ir2;
-                list.add(new Star(new Vec3d(-f * 100.0, e * 100.0, d * 100.0)));
+                list.add(new Star(new Vec3(-f * 100.0, e * 100.0, d * 100.0)));
             }
         }
         return list;
     }
 
     public static int getGeneratorIterations(long seed, int limit) {
-        Random random = Random.create(seed);
+		RandomSource random = RandomSource.create(seed);
         int stars = 0;
 
         for (int i = 0; i < limit * 3; ++i) {
@@ -49,15 +49,15 @@ public class StarUtil {
         return limit * 3;
     }
 
-    public static Vec3d getStarCursor(float yawDegrees, float pitchDegrees) {
+    public static Vec3 getStarCursor(float yawDegrees, float pitchDegrees) {
         double azimuth = (yawDegrees) * Math.PI / 180;
         double inclination = (90.0F + pitchDegrees) * Math.PI / 180;
-        return new Vec3d(-1 * Math.sin(azimuth) * Math.sin(inclination), Math.cos(inclination), Math.cos(azimuth) * Math.sin(inclination)).multiply(100.0F);
+        return new Vec3(-1 * Math.sin(azimuth) * Math.sin(inclination), Math.cos(inclination), Math.cos(azimuth) * Math.sin(inclination)).scale(100F);
     }
 
-    public static Vec3d correctForSkyAngle(Vec3d starCursor, float skyAngle) {
+    public static Vec3 correctForSkyAngle(Vec3 starCursor, float skyAngle) {
         double skyboxRotation = (1.0F - skyAngle) * 2 * Math.PI;
-        return new Vec3d(
+        return new Vec3(
                 Math.cos(skyboxRotation) * starCursor.x - Math.sin(skyboxRotation) * starCursor.y,
                 Math.sin(skyboxRotation) * starCursor.x + Math.cos(skyboxRotation) * starCursor.y,
                 starCursor.z

@@ -4,7 +4,6 @@ import com.mojang.logging.LogUtils;
 import folk.sisby.starcaller.client.StardustTickerImpl;
 import folk.sisby.starcaller.client.StarcallerClient;
 import folk.sisby.starcaller.duck.StarcallerLevel;
-import folk.sisby.starcaller.duck.StarcallerWorld;
 import folk.sisby.starcaller.item.SpearItem;
 import folk.sisby.starcaller.item.StardustItem;
 import folk.sisby.starcaller.network.PacketHandler;

@@ -45,7 +45,8 @@ public class SpearItem extends Item {
 	@Override
 	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
 		super.inventoryTick(stack, level, entity, slotId, isSelected);
-		if (level.isClientSide && entity instanceof Player player && level instanceof StarcallerLevel scw && (player.getMainHandItem() == stack || player.getOffhandItem() == stack)) {
+		if (level.isClientSide && entity instanceof Player player && (player.getMainHandItem() == stack || player.getOffhandItem() == stack)) {
+			StarcallerLevel scw = (StarcallerLevel) entity.level();
 			if (player.pick(12 * 16, 1.0F, false).getType() == HitResult.Type.MISS) {
 				List<Star> stars = scw.starcaller$getStars();
 				Vec3 cursorCoordinates = StarUtil.correctForSkyAngle(StarUtil.getStarCursor(player.getYHeadRot(), player.getXRot()), level.getSunAngle(1.0F));

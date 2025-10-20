@@ -26,10 +26,3 @@ displayURL="${homepage}"
     versionRange="[${mc}]"
     ordering="NONE"
     side="BOTH"
-
-[[dependencies.${modId}]]
-    modId="lib39-sandman"
-    mandatory=true
-    versionRange="[${lib39},)"
-    ordering="NONE"
-    side="BOTH"

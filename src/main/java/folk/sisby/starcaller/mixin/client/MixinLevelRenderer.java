@@ -2,6 +2,7 @@ package folk.sisby.starcaller.mixin.client;
 
 
 import com.llamalad7.mixinextras.injector.ModifyReceiver;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import folk.sisby.starcaller.Star;
 import folk.sisby.starcaller.Starcaller;
 import folk.sisby.starcaller.StarcallerConfig;
@@ -12,6 +13,8 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,40 +35,40 @@ public abstract class MixinLevelRenderer {
     @Shadow private @Nullable ClientLevel level;
     @Unique private int starIndex = -1;
 
-    @Inject(method = "renderStars(Lnet/minecraft/client/render/BufferBuilder;)Lnet/minecraft/client/render/BufferBuilder$BuiltBuffer;", at = @At("HEAD"))
-    public void resetStarDebug(BufferBuilder bufferBuilder, CallbackInfoReturnable<BufferBuilder.BuiltBuffer> cir) {
+    @Inject(method = "drawStars", at = @At("HEAD"))
+    public void resetStarDebug(BufferBuilder bufferBuilder, CallbackInfoReturnable<BufferBuilder> cir) {
         starIndex = -1;
     }
 
-    @Inject(method = "renderStars(Lnet/minecraft/client/render/BufferBuilder;)Lnet/minecraft/client/render/BufferBuilder$BuiltBuffer;", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/random/Random;nextDouble()D"), locals = LocalCapture.CAPTURE_FAILHARD)
-    public void countSuccessfulStars(BufferBuilder bufferBuilder, CallbackInfoReturnable<BufferBuilder.BuiltBuffer> cir, Random random, int i, double d, double e, double f, double g, double h, double j, double k, double l, double m, double n, double o, double p, double q, double r) {
+    @Inject(method = "drawStars", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/RandomSource;nextDouble()D"))
+    public void countSuccessfulStars(BufferBuilder bufferBuilder, CallbackInfoReturnable<BufferBuilder> cir) {
         starIndex++;
     }
 
-    @ModifyArg(method = "renderStars(Lnet/minecraft/client/render/BufferBuilder;)Lnet/minecraft/client/render/BufferBuilder$BuiltBuffer;", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/random/Random;create(J)Lnet/minecraft/util/math/random/Random;"))
+    @ModifyArg(method = "drawStars", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/RandomSource;create(J)Lnet/minecraft/util/RandomSource;"))
     public long useCustomSeed(long original) {
-        if (world instanceof StarcallerLevel scw) {
+        if (level instanceof StarcallerLevel scw) {
             return scw.starcaller$getSeed();
         }
         return original;
     }
 
-    @ModifyConstant(method = "renderStars(Lnet/minecraft/client/render/BufferBuilder;)Lnet/minecraft/client/render/BufferBuilder$BuiltBuffer;", constant = @Constant(intValue = 1500))
+    @ModifyConstant(method = "drawStars", constant = @Constant(intValue = 1500))
     public int useCustomLimit(int constant) {
-        if (world instanceof StarcallerLevel scw) {
+        if (level instanceof StarcallerLevel scw) {
             return scw.starcaller$getIterations();
         }
         return constant;
     }
 
-    @ModifyReceiver(method = "renderStars(Lnet/minecraft/client/render/BufferBuilder;)Lnet/minecraft/client/render/BufferBuilder$BuiltBuffer;", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/VertexConsumer;next()V"))
+    @ModifyReceiver(method = "drawStars", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;endVertex()V"))
     public VertexConsumer setColorPerStar(VertexConsumer instance, BufferBuilder builder) {
         int color = Star.DEFAULT_COLOR;
-        if (world instanceof StarcallerLevel scw) {
+        if (level instanceof StarcallerLevel scw) {
             List<Star> stars = scw.starcaller$getStars();
             if (starIndex < stars.size()) {
                 Star star = stars.get(starIndex);
-                boolean grounded = star.groundedTick != 0 && world.getTime() - star.groundedTick < StarcallerConfig.starGroundedTicks;
+                boolean grounded = star.groundedTick != 0 && level.getDayTime() - star.groundedTick < StarcallerConfig.starGroundedTicks;
                 if (grounded) {
                     color = 0x00FFFF00;
                 } else {
@@ -76,18 +79,18 @@ public abstract class MixinLevelRenderer {
         return instance.color(color);
     }
 
-    @ModifyArg(method = "renderStars()V", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShader(Ljava/util/function/Supplier;)V"), index = 0)
-    public Supplier<ShaderProgram> useColorSupplier(Supplier<ShaderProgram> supplier) {
-        return GameRenderer::getPositionColorProgram;
+    @ModifyArg(method = "createStars", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShader(Ljava/util/function/Supplier;)V"), index = 0)
+    public Supplier<ShaderInstance> useColorSupplier(Supplier<ShaderInstance> supplier) {
+        return GameRenderer::getPositionColorShader;
     }
 
-    @ModifyArg(method = "renderStars(Lnet/minecraft/client/render/BufferBuilder;)Lnet/minecraft/client/render/BufferBuilder$BuiltBuffer;", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/BufferBuilder;begin(Lnet/minecraft/client/render/VertexFormat$DrawMode;Lnet/minecraft/client/render/VertexFormat;)V"), index = 1)
+    @ModifyArg(method = "drawStars", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/BufferBuilder;begin(Lcom/mojang/blaze3d/vertex/VertexFormat$Mode;Lcom/mojang/blaze3d/vertex/VertexFormat;)V"), index = 1)
     public VertexFormat useColorBuffer(VertexFormat vertexFormat) {
-        return VertexFormats.POSITION_COLOR;
+        return DefaultVertexFormat.POSITION_COLOR;
     }
 
-    @ModifyArg(method = "renderSky(Lnet/minecraft/client/util/math/MatrixStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/render/Camera;ZLjava/lang/Runnable;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/VertexBuffer;draw(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/gl/ShaderProgram;)V", ordinal = 1), index = 2)
-    public ShaderProgram useColorProgram(ShaderProgram shaderProgram) {
-        return GameRenderer.getPositionColorProgram();
-    }
+	@ModifyArg(method = "renderSky(Lcom/mojang/blaze3d/vertex/PoseStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/Camera;ZLjava/lang/Runnable;)V", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexBuffer;drawWithShader(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/renderer/ShaderInstance;)V", ordinal = 0), index = 2)
+	public ShaderInstance useColorProgram(ShaderInstance shaderProgram) {
+		return GameRenderer.getPositionColorShader();
+	}
 }

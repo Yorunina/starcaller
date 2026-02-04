@@ -16,9 +16,7 @@ public abstract class MixinInGameHud {
     @ModifyArg(method = "renderCrosshair", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lnet/minecraft/resources/ResourceLocation;IIIIII)V"), index = 0)
     public ResourceLocation useThrowCrosshair(ResourceLocation original) {
 		Player player = Minecraft.getInstance().player;
-		Starcaller.LOGGER.info("renderCrosshair");
         if (player.getMainHandItem().is(Starcaller.SPEAR.get()) || player.getOffhandItem().is(Starcaller.SPEAR.get())) {
-			Starcaller.LOGGER.info("renderCrosshair 1");
             return SPEAR_CROSSHAIR_TEXTURE;
         }
         return original;

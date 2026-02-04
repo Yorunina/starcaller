@@ -60,7 +60,7 @@ public class StarcallerClient {
 					List<Star> stars = scw.starcaller$getStars();
 					boolean reloadStars = false;
 					for (Star star : stars) {
-						if (star.groundedTick != -1 && star.groundedTick + StarcallerConfig.starGroundedTicks <= level.getGameTime()) {
+						if (star.groundedTick != -1 && star.groundedTick + StarcallerConfig.starGroundedTicks <= level.getDayTime()) {
 							star.groundedTick = -1;
 							reloadStars = true;
 						}

@@ -118,14 +118,14 @@ public class Starcaller {
 	@SubscribeEvent
 	public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
 		if (event.getEntity() instanceof ServerPlayer player) {
-			sendInitialStarState(player);
+			PacketHandler.sendInitialStarState(player);
 		}
 	}
 
 	@SubscribeEvent
 	public void onPlayerChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
 		if (event.getEntity() instanceof ServerPlayer player) {
-			sendInitialStarState(player);
+			PacketHandler.sendInitialStarState(player);
 		}
 	}
 
@@ -145,14 +145,14 @@ public class Starcaller {
 		if (star.groundedTick != time) {
 			star.groundedTick = time;
 			level.getDataStorage().get(nbt -> StarState.load(nbt, level.getSeed()), STATE_KEY).setDirty();
-			syncStarGrounded(cause, level, star);
+			PacketHandler.syncStarGrounded(cause, level, star);
 		}
 	}
 
 	public static void colorStar(Player cause, ServerLevel level, Star star, int color) {
 		if (star.color != color) {
 			star.color = color;
-			syncStarColor(cause, level, star);
+			PacketHandler.syncStarColor(cause, level, star);
 		}
 		var nameColor = cause.getDisplayName().getStyle().getColor();
 		star.editor = cause.getDisplayName().getString();
@@ -160,38 +160,7 @@ public class Starcaller {
 		level.getDataStorage().get(nbt -> StarState.load(nbt, level.getSeed()), STATE_KEY).setDirty();
 	}
 
-	public static void sendInitialStarState(ServerPlayer player) {
-		if (player.level() instanceof ServerLevel level && level.dimension() == Level.OVERWORLD && level instanceof StarcallerLevel scw) {
-			Map<Integer, Long> groundedMap = new Int2ObjectArrayMap<>();
-			Map<Integer, Integer> colorMap = new Int2ObjectArrayMap<>();
-			for (Star star : scw.starcaller$getStars()) {
-				if (star.groundedTick != Star.DEFAULT_GROUNDED_TICK) {
-					groundedMap.put(scw.starcaller$getStars().indexOf(star), star.groundedTick);
-				}
-				if (star.color != Star.DEFAULT_COLOR) {
-					colorMap.put(scw.starcaller$getStars().indexOf(star), star.color);
-				}
-			}
-			S2CStarcallerPacket packet = new S2CStarcallerPacket(scw.starcaller$getSeed(), scw.starcaller$getIterations(), groundedMap, colorMap);
-			PacketHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
-		}
-	}
 
-	public static void syncStarGrounded(Player cause, ServerLevel level, Star star) {
-		int starIndex = ((StarcallerLevel) level).starcaller$getStars().indexOf(star);
-		S2CStarcallerPacket packet = new S2CStarcallerPacket(Map.of(starIndex, star.groundedTick));
-		level.getPlayers((pPlayer) -> true).forEach(player -> {
-			PacketHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
-		});
-	}
-
-	public static void syncStarColor(Player cause, ServerLevel level, Star star) {
-		int starIndex = ((StarcallerLevel) level).starcaller$getStars().indexOf(star);
-		S2CStarcallerPacket packet = new S2CStarcallerPacket(Map.of(starIndex, star.color), true);
-		level.getPlayers((pPlayer) -> true).forEach(player -> {
-			PacketHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
-		});
-	}
 
 	@SubscribeEvent
 	public void onTooltip(ItemTooltipEvent event) {

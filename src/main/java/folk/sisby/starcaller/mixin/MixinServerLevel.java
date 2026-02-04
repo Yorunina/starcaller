@@ -48,7 +48,7 @@ public abstract class MixinServerLevel implements StarcallerLevel {
 	public int starcaller$getIterations() {
 		ServerLevel self = (ServerLevel) (Object) this;
 		StarState state = self.getDataStorage().get(nbt -> StarState.load(nbt, self.getSeed()), Starcaller.STATE_KEY);
-		return state != null ? state.iterations : StarUtil.getGeneratorIterations(starcaller$getSeed(), StarcallerConfig.starLimit);
+		return state != null ? state.limit : StarcallerConfig.starLimit;
 	}
 
 	@Override

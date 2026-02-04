@@ -35,7 +35,6 @@ public abstract class MixinClientLevel implements StarcallerLevel {
 	public void fullBrightStarsWithSpear(float f, CallbackInfoReturnable<Float> cir) {
 		Player player = Minecraft.getInstance().player;
 		if (player.getMainHandItem().is(Starcaller.SPEAR.get()) || player.getOffhandItem().is(Starcaller.SPEAR.get())) {
-			Starcaller.LOGGER.info("getStarBrightness");
 			cir.setReturnValue(1.0F);
 			cir.cancel();
 		}

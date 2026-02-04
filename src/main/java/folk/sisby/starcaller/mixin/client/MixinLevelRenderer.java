@@ -1,6 +1,7 @@
 package folk.sisby.starcaller.mixin.client;
 
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReceiver;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import folk.sisby.starcaller.Star;
@@ -18,16 +19,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-@Mixin(LevelRenderer.class)
+@Mixin(value = LevelRenderer.class, priority = 1100)
 public abstract class MixinLevelRenderer {
     @Shadow private @Nullable ClientLevel level;
     @Unique private int starIndex = -1;
@@ -50,7 +49,7 @@ public abstract class MixinLevelRenderer {
         return original;
     }
 
-    @ModifyConstant(method = "drawStars", constant = @Constant(intValue = 1500))
+	@ModifyExpressionValue(method = "drawStars", at = @At(value = "CONSTANT", args = "intValue=1500"))
     public int useCustomLimit(int constant) {
         if (level instanceof StarcallerLevel scw) {
             return scw.starcaller$getIterations();
@@ -86,7 +85,7 @@ public abstract class MixinLevelRenderer {
         return DefaultVertexFormat.POSITION_COLOR;
     }
 
-	@ModifyArg(method = "renderSky(Lcom/mojang/blaze3d/vertex/PoseStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/Camera;ZLjava/lang/Runnable;)V", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexBuffer;drawWithShader(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/renderer/ShaderInstance;)V", ordinal = 0), index = 2)
+	@ModifyArg(method = "renderSky(Lcom/mojang/blaze3d/vertex/PoseStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/Camera;ZLjava/lang/Runnable;)V", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexBuffer;drawWithShader(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/renderer/ShaderInstance;)V", ordinal = 1), index = 2)
 	public ShaderInstance useColorProgram(ShaderInstance shaderProgram) {
 		return GameRenderer.getPositionColorShader();
 	}
